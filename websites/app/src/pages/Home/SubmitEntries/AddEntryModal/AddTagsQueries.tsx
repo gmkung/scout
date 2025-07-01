@@ -77,6 +77,10 @@ const AddTagsQueries: React.FC = () => {
     queryKey: ['addressissues', evmChainId, 'Tags_Queries', githubRepository],
     queryFn: () => getAddressValidationIssue(evmChainId, 'Tags_Queries', undefined, undefined, undefined, undefined, githubRepository, undefined),
     enabled: Boolean(githubRepository) || Boolean(commitHash) || Boolean(evmChainId) || Boolean(description),
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
   });
 
   const { data: countsData } = useQuery({
@@ -120,8 +124,14 @@ const AddTagsQueries: React.FC = () => {
   };
 
   const submittingDisabled = useMemo(() => {
-    return Boolean(!githubRepository || !commitHash || !evmChainId || !description || !!addressIssuesData || addressIssuesLoading);
-  }, [githubRepository, commitHash, evmChainId, description, addressIssuesData, addressIssuesLoading]);
+    // Only disable for validation errors, not for loading state after a reasonable time
+    const hasValidationErrors = addressIssuesData && Object.values(addressIssuesData).some(issue => 
+      issue && typeof issue === 'object' && 'severity' in issue && issue.severity === 'error'
+    )
+    const hasRequiredFields = Boolean(githubRepository && commitHash && evmChainId && description)
+    
+    return !hasRequiredFields || hasValidationErrors;
+  }, [githubRepository, commitHash, evmChainId, description, addressIssuesData]);
 
   return (
     <AddContainer>
