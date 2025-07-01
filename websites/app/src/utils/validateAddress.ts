@@ -109,16 +109,29 @@ const getDupesInRegistry = async (
     }
   `
 
-  const result = (await request({
-    url: SUBGRAPH_GNOSIS_ENDPOINT,
-    document: query,
-    variables: {
-      registry: registryAddress,
-      richAddress,
-    },
-  })) as any
-  const items = result.litems
-  return items.length
+  try {
+    // Add timeout to prevent hanging requests
+    const requestPromise = request({
+      url: SUBGRAPH_GNOSIS_ENDPOINT,
+      document: query,
+      variables: {
+        registry: registryAddress,
+        richAddress,
+      },
+    }) as Promise<any>
+
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Request timeout')), 10000)
+    )
+
+    const result = await Promise.race([requestPromise, timeoutPromise]) as any
+    const items = result.litems
+    return items.length
+  } catch (error) {
+    console.warn('Failed to check for duplicates, allowing submission:', error)
+    // If the duplicate check fails, don't block submission
+    return 0
+  }
 }
 
 // null

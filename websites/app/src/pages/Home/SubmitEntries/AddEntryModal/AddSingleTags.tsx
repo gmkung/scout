@@ -135,6 +135,10 @@ const AddAddressTag: React.FC = () => {
     queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'Single_Tags', projectName, publicNameTag, website],
     queryFn: () => getAddressValidationIssue(network.value, 'Single_Tags', debouncedAddress, undefined, projectName, publicNameTag, website),
     enabled: Boolean(debouncedAddress) || Boolean(projectName) || Boolean(publicNameTag) || Boolean(website),
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
   });
 
   const {
@@ -180,8 +184,14 @@ const AddAddressTag: React.FC = () => {
   }
 
     const submittingDisabled = useMemo(() => {
-      return Boolean(!address || !projectName || !publicNameTag || !publicNote || !website || !!addressIssuesData || addressIssuesLoading);
-    }, [address, projectName, publicNameTag, publicNote, website, addressIssuesData, addressIssuesLoading]);
+      // Only disable for validation errors, not for loading state after a reasonable time
+      const hasValidationErrors = addressIssuesData && Object.values(addressIssuesData).some(issue => 
+        issue && typeof issue === 'object' && 'severity' in issue && issue.severity === 'error'
+      )
+      const hasRequiredFields = Boolean(address && projectName && publicNameTag && publicNote && website)
+      
+      return !hasRequiredFields || hasValidationErrors;
+    }, [address, projectName, publicNameTag, publicNote, website, addressIssuesData]);
   
   return (
     <AddContainer>

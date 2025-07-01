@@ -126,6 +126,10 @@ const AddCDN: React.FC = () => {
     queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'CDN', domain],
     queryFn: () => getAddressValidationIssue(network.value, 'CDN', debouncedAddress, domain),
     enabled: Boolean(debouncedAddress) || Boolean(domain),
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
@@ -159,8 +163,14 @@ const AddCDN: React.FC = () => {
   }
 
   const submittingDisabled = useMemo(() => {
-    return Boolean(!address || !domain || !!addressIssuesData || !!addressIssuesLoading || !path || imageError);
-  }, [address, domain, addressIssuesData, addressIssuesLoading, path, imageError]);
+    // Only disable for validation errors, not for loading state after a reasonable time
+    const hasValidationErrors = addressIssuesData && Object.values(addressIssuesData).some(issue => 
+      issue && typeof issue === 'object' && 'severity' in issue && issue.severity === 'error'
+    )
+    const hasRequiredFields = Boolean(address && domain && path && !imageError)
+    
+    return !hasRequiredFields || hasValidationErrors;
+  }, [address, domain, addressIssuesData, path, imageError]);
 
   return (
     <AddContainer>
