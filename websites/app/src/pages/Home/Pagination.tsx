@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { useSearchParams } from 'react-router-dom'
-import Button from 'components/Button'
+import { Button } from 'components/Button'
 
 const Container = styled.div`
   display: flex;
