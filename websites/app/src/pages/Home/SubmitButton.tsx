@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { useSearchParams } from 'react-router-dom'
-import Button from 'components/Button'
+import { Button } from 'components/Button'
 
 const StyledButton = styled(Button)`
   display: flex;
